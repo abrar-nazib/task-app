@@ -4,88 +4,37 @@ require("./db/mongoose.js"); // For database conncetion
 const app = express();
 const port = process.env.PORT || 3000; // If no port is set, will be listening on port 3000
 
-//------- Loading Models-----------------------------
-const User = require("./models/user.js");
-const Task = require("./models/task.js");
-const res = require("express/lib/response");
+//--------Express Routers--------------------------------
+const userRouter = require("./routers/user.js");
+const taskRouter = require("./routers/task.js");
 
-//
+//--------Global vairables-------------------------------
 
-app.use(express.json());
-// For parsing the incoming json into javascript object
+//------- Express Middleware ----------------------------
+// Used for handling authentication
 
-//----------- Users route --------------------------
-
-app.get("/users", async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (error) {
-    res.status(500).send(error);
-    // 500 -> internal server error
-  }
-});
-
-app.get("/users/:id", async (req, res) => {
-  const _id = req.params.id;
-
-  try {
-    const user = await User.findById(_id);
-    if (!user) {
-      return res.status(404).send();
-    }
-    res.send(user);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-app.post("/users", async (req, res) => {
-  const user = new User(req.body);
-
-  try {
-    await user.save();
-    res.status(201).send(user);
-  } catch (error) {
-    res.status(400).send(error);
-  }
-});
+//--------- Express customizations--------------
+app.use(express.json()); // For parsing the incoming json into javascript object
+app.use(userRouter); // router
+app.use(taskRouter); // router
 
 //------------------------Tasks------------------------
-
-app.get("/tasks", async (req, res) => {
-  try {
-    const tasks = await Task.find({});
-    res.send(tasks);
-  } catch (error) {
-    res.status(500).send(error);
-    // 400 - Bad request
-  }
-});
-
-app.get("/tasks/:id", async (req, res) => {
-  const _id = req.params.id;
-  try {
-    const task = await Task.findById(_id);
-    if (!task) {
-      return res.status(404).send();
-    }
-    res.send(task);
-  } catch (error) {
-    res.status(500).send();
-  }
-});
-
-app.post("/tasks", async (req, res) => {
-  const task = new Task(req.body);
-  try {
-    await task.save();
-    res.send(task);
-  } catch (error) {
-    res.status(400).send(error);
-  }
-});
 
 app.listen(port, () => {
   console.log("Server is running on port ", port);
 });
+
+const Task = require("./models/task.js");
+const User = require("./models/user.js");
+
+const testfunc = async () => {
+  // const task = await Task.findById("625fb6b84dccdf310b921d99");
+  // const populatedTask = await task.populate("owner");
+  // console.log(task.owner);
+  // 625fb4e05c75c5df632baf45
+  const user = await User.findById("625fb4e05c75c5df632baf45");
+  await user.populate("tasks");
+  console.log(user.tasks);
+};
+
+// testfunc();
