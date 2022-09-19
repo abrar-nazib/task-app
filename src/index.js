@@ -24,17 +24,12 @@ app.listen(port, () => {
   console.log("Server is running on port ", port);
 });
 
-const Task = require("./models/task.js");
-const User = require("./models/user.js");
+const multer = require("multer");
+const upload = multer({
+  dest: "images",
+});
 
-const testfunc = async () => {
-  // const task = await Task.findById("625fb6b84dccdf310b921d99");
-  // const populatedTask = await task.populate("owner");
-  // console.log(task.owner);
-  // 625fb4e05c75c5df632baf45
-  const user = await User.findById("625fb4e05c75c5df632baf45");
-  await user.populate("tasks");
-  console.log(user.tasks);
-};
-
+app.post("/upload", upload.single("upload"), (req, res) => {
+  res.send();
+});
 // testfunc();

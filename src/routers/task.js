@@ -17,16 +17,39 @@ router.post("/tasks", auth, async (req, res) => {
   }
 });
 
+// GET tasks?completed=bool
+// GET task?limit=10&skip=0
+// GET task?sortBy=createdAt:desc
 router.get("/tasks", auth, async (req, res) => {
   try {
-    const tasks = await Task.find({ owner: req.user._id });
-    //await req.user.populate("tasks"); const task = user.tasks; // Would also work the same way
+    const match = {};
+    const sort = {};
+
+    if (req.query.completed) {
+      match.completed = req.query.completed === "true";
+    }
+    if (req.query.sortBy) {
+      const parts = req.query.sortBy.split(":");
+      sort[parts[0]] = parts[1] === "desc" ? -1 : 1;
+    }
+
+    await req.user.populate({
+      path: "tasks",
+      match,
+      options: {
+        limit: parseInt(req.query.limit), // will only send instructions to the database if inputted parameter is an integer.
+        skip: parseInt(req.query.skip), // will ignore the n number of returned results and start from (n+1)th result.
+        sort,
+      },
+    });
+
+    const tasks = req.user.tasks;
     if (!tasks) {
       return res.status(404).send();
     }
     res.send(tasks);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).send(error.message);
     // 400 - Bad request
   }
 });

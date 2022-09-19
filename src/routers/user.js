@@ -1,8 +1,26 @@
-const User = require("../models/user.js");
+const multer = require("multer");
 const express = require("express");
 const router = new express.Router();
+
+//------------------ Model --------------------------------------
+const User = require("../models/user.js");
+
+//------------------- Custom Middlewares -------------------------
 const auth = require("../middleware/auth.js"); // Express middleware to handle authentication
-// Don't import anything autometically
+
+//------------------ configure multer ----------------------------
+const upload = multer({
+  // dest: "avatar", // Destination folder where the file will be saved
+  limits: {
+    fileSize: 1000000, // Uploaded filesize should not exceed 1 MB
+  },
+  fileFilter(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error("Only image files are allowed")); // reject for other file types
+    }
+    cb(undefined, true); // continue to file upload process
+  },
+});
 
 router.post("/users", async (req, res) => {
   // registration mechanism
@@ -30,14 +48,10 @@ router.post("/users/login", async (req, res) => {
 });
 
 router.post("/users/logout", auth, async (req, res) => {
-  console.log("-------------------------------------------");
-  console.log(req.user.tokens);
   try {
     req.user.tokens = req.user.tokens.filter((token) => {
       return token.token != req.token;
     });
-    console.log("--------!!!------------");
-    console.log(req.user.tokens);
     await req.user.save();
     res.send();
   } catch (error) {
@@ -91,6 +105,34 @@ router.delete("/users/me", auth, async (req, res) => {
     res.send(req.user);
   } catch (error) {
     res.status(500).send(error);
+  }
+});
+
+// Router for profile picture upload
+router.post(
+  "/users/me/avatar", // path
+  auth, // authentication middleware
+  upload.single("avatar"), // middleware for checking file validity
+  async (req, res) => {
+    // route handler
+    req.user.avatar = req.file.buffer;
+    await req.user.save();
+    res.send();
+  },
+  (error, req, res, next) => {
+    // error handler for middleware
+    res.status(400).send({ Error: error.message });
+  }
+);
+
+// Router for profile picture delete
+router.delete("/users/me/avatar", auth, async (req, res) => {
+  try {
+    req.user.avatar = undefined;
+    await req.user.save();
+    res.status(200).send();
+  } catch (e) {
+    res.status(400).send(e.message);
   }
 });
 

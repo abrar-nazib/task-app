@@ -51,6 +51,9 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    avatar: {
+      type: Buffer,
+    },
   },
   {
     timestamps: true, // For storing time when the user was created and time when the user was last updated.
